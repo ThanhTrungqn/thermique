@@ -47,6 +47,10 @@ class IMPROCESS:
 		self.presence = 0
 		self.person_in = 0
 		self.person_out = 0
+		self.person_in_old = 0
+		self.person_out_old = 0
+		self.person_in_now = 0
+		self.person_out_now = 0
 		self.class_tracking = TRACKING()
 
 	def init_list_label(self):
@@ -162,6 +166,10 @@ class IMPROCESS:
 		self.image_threshold()
 		self.image_morphology()
 		self.labeling()
+		self.person_in_old = self.person_in
+		self.person_out_old = self.person_out
 		(self.presence, self.person_in, self.person_out) = self.class_tracking.labelTracking(self.Label, self.class_tracking.tTracking , idx)
+		self.person_in_now = self.person_in - self.person_in_old
+		self.person_out_now = self.person_out - self.person_out_old
 		self.update_bg()
 		#print(len(self.Label))

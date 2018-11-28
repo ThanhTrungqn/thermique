@@ -7,6 +7,7 @@ from htpa import *
 from improcess import *
 import paho.mqtt.client as mqtt
 import mysql.connector
+import datetime
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -27,7 +28,6 @@ def payload(im, temp, presence, pin, pout):
 
 client = mqtt.Client()
 client.on_connect = on_connect
-client.on_message = on_message
 client.connect("localhost", 1883, 60)
 
 mydb = mysql.connector.connect(
@@ -37,6 +37,7 @@ mydb = mysql.connector.connect(
   database="dbcomptage"
 )
 
+mycursor = mydb.cursor()
 
 i = 0
 take_Offset=False
@@ -57,7 +58,17 @@ while(True):
 
 	improcess.image_processing(im,i)
 
-	#if (improcess.person_in > 0):
+	if (improcess.person_in_now > 0 or improcess.person_out_now > 0):
+		#get time and post
+		now = datetime.datetime.now()
+		date = now.strftime('%Y-%m-%d')
+		time_value = now.strftime('%H:%M:%S')
+		sql = "INSERT INTO comptage (date , time, c_in , c_out) VALUES (%s, %s, %s, %s)"
+		val = ( date, time_value, improcess.person_in_now, improcess.person_out_now)
+		mycursor.execute(sql, val)
+		mydb.commit()
+		print(mycursor.rowcount, "record inserted.")
+
         message = payload(improcess.img_filtered_dif_pos, (temps - 2731)/10, improcess.presence, improcess.person_in, improcess.person_out)
 	client.publish("songohan",payload=message,qos=0,retain=False)
 	i += 1
